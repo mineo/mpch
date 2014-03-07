@@ -13,11 +13,10 @@ mpd = MPD.withMPD_ addr port
 
 handleResponse :: MPD.Response (Maybe MPD.Song) -> IO ()
 handleResponse (Left e) = print e
-handleResponse (Right content) = print $ getMBIDfromResponse content
+handleResponse (Right content) = print $ fmap getMBIDfromResponse content
 
-getMBIDfromResponse :: Maybe MPD.Song -> Maybe [MPD.Value]
-getMBIDfromResponse (Just song) = MPD.sgGetTag MPD.MUSICBRAINZ_TRACKID song
-getMBIDfromResponse _ = Nothing
+getMBIDfromResponse :: MPD.Song -> Maybe [MPD.Value]
+getMBIDfromResponse = MPD.sgGetTag MPD.MUSICBRAINZ_TRACKID
 
 main :: IO ()
 {-main = mpd MPD.currentSong >>= \resp -> print $ getMBIDfromResponse resp-}
