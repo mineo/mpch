@@ -16,4 +16,7 @@ getMBIDfromResponse (Right (Just song)) = MPD.sgGetTag MPD.MUSICBRAINZ_TRACKID s
 getMBIDfromResponse _ = Nothing
 
 main :: IO ()
-main = mpd MPD.currentSong >>= \resp -> print $ getMBIDfromResponse resp
+{-main = mpd MPD.currentSong >>= \resp -> print $ getMBIDfromResponse resp-}
+main = do
+       resp <- mpd MPD.currentSong
+       print $ getMBIDfromResponse resp 
