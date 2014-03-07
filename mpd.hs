@@ -36,8 +36,6 @@ mpd action config = MPD.withMPD_ h p action
     where h = host config
           p = port config
 
-parseArgs :: [String] -> ([Config -> Config], [String], [String])
-parseArgs = getOpt Permute options
 
 handleArgs :: (b, t, [[a]]) -> Either [a] b
 handleArgs opts = case opts of
@@ -59,5 +57,5 @@ main = do
         args <- getArgs
         let parsedArgs = handleArgs $ parseArgs args
         let config = either (const defaultConfig) (configure defaultConfig) parsedArgs
-        print config
         mpd MPD.currentSong config >>= print . handleResponse
+    where parseArgs = getOpt Permute options
