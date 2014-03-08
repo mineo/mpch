@@ -58,7 +58,7 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                     error $ concat errs ++ usageInfo "" options
                 where dispatchArgs config = map (applyArg config) dispatchList
-                      applyArg config (f, predicate) = when (predicate config) $ loveTrack config
+                      applyArg config (f, predicate) = when (predicate config) $ f config
 
 
 configure :: Config -> [Config -> Config] -> Config
