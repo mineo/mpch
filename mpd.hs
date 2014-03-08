@@ -75,11 +75,10 @@ tagArtist = undefined
 getTag :: MPD.Metadata  -> Maybe MPD.Song-> Maybe [MPD.Value]
 getTag tag r = maybe Nothing (MPD.sgGetTag tag) r
 
-main :: IO ()
+main :: IO [()]
 main = do
         args <- getArgs
         let parsedArgs = parseArgs args
         let handledArgs = handleArgs parsedArgs
         sequence handledArgs
-        print "hi"
     where parseArgs = getOpt Permute options
