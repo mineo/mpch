@@ -2,7 +2,7 @@
 
 import qualified Network.MPD as MPD
 
-import Data.Maybe (maybe)
+import Data.Maybe (maybe, fromMaybe)
 import Data.Text ()
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
@@ -56,5 +56,5 @@ main = do
         args <- getArgs
         let config = configure defaultConfig $ handleArgs $ parseArgs args
         resp <- mpd MPD.currentSong config
-        either print (print . getTag) resp
+        either print (print . (fromMaybe [MPD.Value ""] . getTag)) resp
     where parseArgs = getOpt Permute options
