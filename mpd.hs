@@ -54,8 +54,7 @@ configure = foldl (\cfg x -> x cfg)
 main :: IO ()
 main = do
         args <- getArgs
-        let parsedArgs = handleArgs $ parseArgs args
-        let config = configure defaultConfig parsedArgs
+        let config = configure defaultConfig $ handleArgs $ parseArgs args
         resp <- mpd MPD.currentSong config
         either print (print . getTag) resp
     where parseArgs = getOpt Permute options
