@@ -2,6 +2,7 @@
 
 import qualified Network.MPD as MPD
 
+import Control.Monad (when)
 import Data.Maybe (maybe, fromMaybe, isJust)
 import Data.Text ()
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(NoArg, OptArg, ReqArg), getOpt, ArgOrder(Permute), usageInfo)
@@ -55,7 +56,7 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                     error $ concat errs ++ usageInfo "" options
                 where dispatchArgs config = map (applyArg config) dispatchList
-                      applyArg config (f, predicate) = case predicate config of True -> f config
+                      applyArg config (f, predicate) = when (predicate config) $ loveTrack config
 
 
 configure :: Config -> [Config -> Config] -> Config
