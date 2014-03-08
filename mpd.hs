@@ -40,6 +40,7 @@ options =
           doArtistTag arg opt = opt {artistTag = Just arg}
           doTitleTag arg opt = opt {titleTag = Just arg}
 
+dispatchList :: [(Config -> IO (), Config -> Bool)]
 dispatchList = [(loveTrack, love), (tagTrack, (\c -> isJust $ titleTag c)), (tagArtist, (\c -> isJust $ artistTag c))]
 
 
@@ -49,6 +50,7 @@ mpd action config = MPD.withMPD_ h p action
           p = port config
 
 
+handleArgs :: ([Config -> Config], t, [[Char]]) -> [IO ()]
 handleArgs opts = case opts of
                  (args, _, []) -> do
                     let config = configure defaultConfig args
@@ -68,11 +70,13 @@ loveTrack config = do
         let mbid = either (error "no mbid") (getTag MPD.MUSICBRAINZ_TRACKID) resp
         print mbid
 
+tagTrack :: Config -> IO ()
 tagTrack = undefined
 
+tagArtist :: Config -> IO ()
 tagArtist = undefined
 
-getTag :: MPD.Metadata  -> Maybe MPD.Song-> Maybe [MPD.Value]
+getTag :: MPD.Metadata -> Maybe MPD.Song-> Maybe [MPD.Value]
 getTag tag r = maybe Nothing (MPD.sgGetTag tag) r
 
 main :: IO [()]
