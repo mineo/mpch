@@ -2,6 +2,7 @@
 
 import qualified Network.MPD as MPD
 
+import Data.Maybe (maybe)
 import Data.Text ()
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
@@ -44,10 +45,8 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                      error $ concat errs ++ usageInfo "" options
 
-handleResponse :: MPD.Response (Maybe MPD.Song) -> Either MPD.MPDError (Maybe [MPD.Value])
-handleResponse (Right (Just content)) = Right $ MPD.sgGetTag MPD.Album content
-handleResponse (Right Nothing) = Right Nothing
-handleResponse (Left e) = Left e
+handleResponse :: Maybe MPD.Song -> Maybe [MPD.Value]
+handleResponse = maybe Nothing (MPD.sgGetTag MPD.Album)
 
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
