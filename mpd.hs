@@ -3,7 +3,7 @@
 import qualified Network.MPD as MPD
 
 import Data.Text ()
-import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute))
+import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
 
 
@@ -37,15 +37,15 @@ mpd action config = MPD.withMPD_ h p action
           p = port config
 
 
-handleArgs :: (b, t, [[a]]) -> Either [a] b
+handleArgs :: (t, t1, [String]) -> t
 handleArgs opts = case opts of
                  (args, _, []) ->
-                     Right args
+                     args
                  (_, _, errs) ->
-                     Left $ concat errs
+                     error $ concat errs ++ usageInfo "" options
 
 handleResponse :: MPD.Response (Maybe MPD.Song) -> Either MPD.MPDError (Maybe [MPD.Value])
-handleResponse (Right (Just content)) = Right $ MPD.sgGetTag MPD.MUSICBRAINZ_TRACKID content
+handleResponse (Right (Just content)) = Right $ MPD.sgGetTag MPD.Album content
 handleResponse (Right Nothing) = Right Nothing
 handleResponse (Left e) = Left e
 
@@ -56,6 +56,6 @@ main :: IO ()
 main = do
         args <- getArgs
         let parsedArgs = handleArgs $ parseArgs args
-        let config = either (const defaultConfig) (configure defaultConfig) parsedArgs
+        let config = configure defaultConfig parsedArgs
         mpd MPD.currentSong config >>= print . handleResponse
     where parseArgs = getOpt Permute options
