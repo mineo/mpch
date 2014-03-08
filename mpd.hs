@@ -39,7 +39,6 @@ options =
           doArtistTag arg opt = opt {artistTag = Just arg}
           doTitleTag arg opt = opt {titleTag = Just arg}
 
-dispatchList :: [(t, Config -> Bool)]
 dispatchList = [(loveTrack, love), (tagTrack, (\c -> isJust $ titleTag c)), (tagArtist, (\c -> isJust $ artistTag c))]
 
 
@@ -49,7 +48,6 @@ mpd action config = MPD.withMPD_ h p action
           p = port config
 
 
-handleArgs :: ([Config -> Config], t, [[Char]]) -> [b]
 handleArgs opts = case opts of
                  (args, _, []) -> do
                     let config = configure defaultConfig args
@@ -63,20 +61,24 @@ handleArgs opts = case opts of
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
 
-loveTrack = undefined
+loveTrack :: Config -> IO ()
+loveTrack config = do
+        resp <- mpd MPD.currentSong config
+        let mbid = either (error "no mbid") (getTag MPD.MUSICBRAINZ_TRACKID) resp
+        print mbid
 
 tagTrack = undefined
 
 tagArtist = undefined
+
+getTag :: MPD.Metadata  -> Maybe MPD.Song-> Maybe [MPD.Value]
+getTag tag r = maybe Nothing (MPD.sgGetTag tag) r
 
 main :: IO ()
 main = do
         args <- getArgs
         let parsedArgs = parseArgs args
         let handledArgs = handleArgs parsedArgs
-        let config = configure defaultConfig handledArgs
-        resp <- mpd MPD.currentSong config
-        print config
-        either print (print . (fromMaybe [MPD.Value ""] . getTag)) resp
+        sequence handledArgs
+        print "hi"
     where parseArgs = getOpt Permute options
-          getTag = maybe Nothing (MPD.sgGetTag MPD.Album)
