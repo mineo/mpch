@@ -40,7 +40,7 @@ options =
           doTitleTag arg opt = opt {titleTag = Just arg}
 
 dispatchList :: [(Config -> IO (), Config -> Bool)]
-dispatchList = [(loveTrack, love), (tagTrack, (\c -> isJust $ titleTag c)), (tagArtist, (\c -> isJust $ artistTag c))]
+dispatchList = [(loveTrack, love), (tagTrack, isJust . titleTag), (tagArtist, isJust . artistTag)]
 
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
@@ -49,7 +49,7 @@ mpd action config = MPD.withMPD_ h p action
           p = port config
 
 
-handleArgs :: ([Config -> Config], t, [[Char]]) -> [IO ()]
+handleArgs :: ([Config -> Config], t, [String]) -> [IO ()]
 handleArgs opts = case opts of
                  (args, _, []) -> do
                     let config = configure defaultConfig args
@@ -63,7 +63,7 @@ handleArgs opts = case opts of
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
 
-abortOnNothing :: Maybe t -> [Char] -> IO ()
+abortOnNothing :: Maybe t -> String -> IO ()
 abortOnNothing Nothing m = error m
 abortOnNothing _ _ = return ()
 
@@ -76,8 +76,7 @@ loveTrack config = do
         abortOnNothing artistname "The song has no artist"
         printFirstElem m
         printFirstElem artistname
-    where convertMPDMaybe a = fromJust a
-          printFirstElem = print . MPD.toUtf8 . head . convertMPDMaybe
+    where printFirstElem = print . MPD.toUtf8 . head . fromJust
 
 tagTrack :: Config -> IO ()
 tagTrack = undefined
@@ -86,7 +85,7 @@ tagArtist :: Config -> IO ()
 tagArtist = undefined
 
 getTag :: MPD.Metadata -> Maybe MPD.Song-> Maybe [MPD.Value]
-getTag t r = maybe Nothing (MPD.sgGetTag t) r
+getTag t = maybe Nothing (MPD.sgGetTag t)
 
 main :: IO [()]
 main = do
