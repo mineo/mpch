@@ -45,8 +45,8 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                      error $ concat errs ++ usageInfo "" options
 
-handleResponse :: Maybe MPD.Song -> Maybe [MPD.Value]
-handleResponse = maybe Nothing (MPD.sgGetTag MPD.Album)
+getTag :: Maybe MPD.Song -> Maybe [MPD.Value]
+getTag = maybe Nothing (MPD.sgGetTag MPD.Album)
 
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
@@ -57,5 +57,5 @@ main = do
         let parsedArgs = handleArgs $ parseArgs args
         let config = configure defaultConfig parsedArgs
         resp <- mpd MPD.currentSong config
-        either print (print . handleResponse) resp
+        either print (print . getTag) resp
     where parseArgs = getOpt Permute options
