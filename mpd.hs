@@ -56,5 +56,5 @@ main = do
         args <- getArgs
         let parsedArgs = handleArgs $ parseArgs args
         let config = configure defaultConfig parsedArgs
-        mpd MPD.currentSong config >>= print . handleResponse
+        mpd MPD.currentSong config >>= either print (print . handleResponse)
     where parseArgs = getOpt Permute options
