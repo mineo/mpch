@@ -11,8 +11,6 @@ import System.Environment (getArgs)
 data Config = Config {
     host :: Maybe String,
     port :: Maybe String,
-    artistTag :: Maybe String,
-    titleTag :: Maybe String,
     love :: Bool
 }
     deriving Show
@@ -21,8 +19,6 @@ defaultConfig :: Config
 defaultConfig = Config {
     host = Nothing,
     port = Nothing,
-    artistTag = Nothing,
-    titleTag = Nothing,
     love = False
 }
 options :: [OptDescr (Config -> Config)]
@@ -30,17 +26,13 @@ options =
  [
     Option [] ["host"] (OptArg doHost "HOST") "mpd host",
     Option [] ["port"] (OptArg doPort "PORT") "mpd port",
-    Option ['l'] ["love"] (NoArg (\opt -> opt { love = True })) "love the track",
-    Option ['a'] ["artisttag"] (ReqArg doArtistTag "artisttag") "artist tag",
-    Option ['t'] ["titletag"] (ReqArg doTitleTag "titletag") "title tag"
+    Option ['l'] ["love"] (NoArg (\opt -> opt { love = True })) "love the track"
  ]
     where doHost arg opt = opt { host = arg }
           doPort arg opt = opt { port = arg }
-          doArtistTag arg opt = opt {artistTag = Just arg}
-          doTitleTag arg opt = opt {titleTag = Just arg}
 
 dispatchList :: [(Config -> IO (), Config -> Bool)]
-dispatchList = [(loveTrack, love), (tagTrack, isJust . titleTag), (tagArtist, isJust . artistTag)]
+dispatchList = [(loveTrack, love)]
 
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
@@ -77,12 +69,6 @@ loveTrack config = do
         printFirstElem m
         printFirstElem artistname
     where printFirstElem = print . MPD.toUtf8 . head . fromJust
-
-tagTrack :: Config -> IO ()
-tagTrack = undefined
-
-tagArtist :: Config -> IO ()
-tagArtist = undefined
 
 getTag :: MPD.Metadata -> Maybe MPD.Song-> Maybe [MPD.Value]
 getTag t = maybe Nothing (MPD.sgGetTag t)
