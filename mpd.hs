@@ -3,8 +3,7 @@
 import qualified Network.MPD as MPD
 
 import Control.Monad (when)
-import Data.Maybe (maybe, fromMaybe, isJust)
-import Data.Text ()
+import Data.Maybe (isJust, fromJust)
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(NoArg, OptArg, ReqArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
 
@@ -64,11 +63,21 @@ handleArgs opts = case opts of
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
 
+abortOnNothing :: Maybe t -> [Char] -> IO ()
+abortOnNothing Nothing m = error m
+abortOnNothing _ _ = return ()
+
 loveTrack :: Config -> IO ()
 loveTrack config = do
         resp <- mpd MPD.currentSong config
-        let mbid = either (error "no mbid") (getTag MPD.MUSICBRAINZ_TRACKID) resp
-        print mbid
+        let m = either (error . show) (getTag MPD.MUSICBRAINZ_TRACKID) resp
+        abortOnNothing m "The song has no mbid"
+        let artistname = either (error . show) (getTag MPD.Artist) resp
+        abortOnNothing artistname "The song has no artist"
+        printFirstElem m
+        printFirstElem artistname
+    where convertMPDMaybe a = fromJust a
+          printFirstElem = print . MPD.toUtf8 . head . convertMPDMaybe
 
 tagTrack :: Config -> IO ()
 tagTrack = undefined
@@ -77,7 +86,7 @@ tagArtist :: Config -> IO ()
 tagArtist = undefined
 
 getTag :: MPD.Metadata -> Maybe MPD.Song-> Maybe [MPD.Value]
-getTag tag r = maybe Nothing (MPD.sgGetTag tag) r
+getTag t r = maybe Nothing (MPD.sgGetTag t) r
 
 main :: IO [()]
 main = do
