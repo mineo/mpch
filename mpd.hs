@@ -25,12 +25,8 @@ options =
     Option [] ["host"] (OptArg doHost "HOST") "mpd host",
     Option [] ["port"] (OptArg doPort "PORT") "mpd port"
  ]
-
-doHost :: Maybe String -> Config -> Config
-doHost arg opt = opt { host = arg }
-
-doPort :: Maybe String -> Config -> Config
-doPort arg opt = opt { port = arg }
+    where doHost arg opt = opt { host = arg }
+          doPort arg opt = opt { port = arg }
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
 mpd action config = MPD.withMPD_ h p action
@@ -45,9 +41,6 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                      error $ concat errs ++ usageInfo "" options
 
-getTag :: Maybe MPD.Song -> Maybe [MPD.Value]
-getTag = maybe Nothing (MPD.sgGetTag MPD.Album)
-
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
 
@@ -58,3 +51,4 @@ main = do
         resp <- mpd MPD.currentSong config
         either print (print . (fromMaybe [MPD.Value ""] . getTag)) resp
     where parseArgs = getOpt Permute options
+          getTag = maybe Nothing (MPD.sgGetTag MPD.Album)
