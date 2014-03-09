@@ -10,30 +10,32 @@ import System.Environment (getArgs)
 
 data Config = Config {
     host :: Maybe String,
-    port :: Maybe String,
-    love :: Bool
+    port :: Maybe String
 }
     deriving Show
 
 defaultConfig :: Config
 defaultConfig = Config {
     host = Nothing,
-    port = Nothing,
-    love = False
+    port = Nothing
 }
+
 options :: [OptDescr (Config -> Config)]
 options =
  [
     Option [] ["host"] (OptArg doHost "HOST") "mpd host",
-    Option [] ["port"] (OptArg doPort "PORT") "mpd port",
-    Option ['l'] ["love"] (NoArg (\opt -> opt { love = True })) "love the track"
+    Option [] ["port"] (OptArg doPort "PORT") "mpd port"
  ]
     where doHost arg opt = opt { host = arg }
           doPort arg opt = opt { port = arg }
 
-dispatchList :: [(Config -> IO (), Config -> Bool)]
-dispatchList = [(loveTrack, love)]
+data Command = Command {
+    name :: String,
+    f :: Config -> IO ()
+}
 
+commands :: [Command]
+commands = [Command "currentsong" currentSong]
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
 mpd action config = MPD.withMPD_ h p action
@@ -41,42 +43,52 @@ mpd action config = MPD.withMPD_ h p action
           p = port config
 
 
-handleArgs :: ([Config -> Config], t, [String]) -> [IO ()]
+handleArgs :: ([Config -> Config], [String], [String]) -> IO ()
 handleArgs opts = case opts of
-                 (args, _, []) -> do
+                 (args, noptions, []) -> do
                     let config = configure defaultConfig args
-                    dispatchArgs config
+                    dispatchArgs config noptions
                  (_, _, errs) ->
                     error $ concat errs ++ usageInfo "" options
-                where dispatchArgs config = map (applyArg config) dispatchList
-                      applyArg config (f, predicate) = when (predicate config) $ f config
+                where dispatchArgs _ [] = print "no command specified"
+                      dispatchArgs config noptions = mapM_ (applyArg config) noptions
 
+applyArg :: Config -> String -> IO ()
+applyArg config noption = doIfMatch config commands noption
+
+doIfMatch :: Config -> [Command] -> String -> IO ()
+doIfMatch _ [] _ = print "no command specified"
+doIfMatch config (x:xs) commandname
+        | commandname == name x = (f x) config
+        | otherwise = doIfMatch config xs commandname
 
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
 
-abortOnNothing :: Maybe t -> String -> IO ()
-abortOnNothing Nothing m = error m
-abortOnNothing _ _ = return ()
+tags :: [MPD.Metadata]
+tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
-loveTrack :: Config -> IO ()
-loveTrack config = do
+currentSong :: Config -> IO ()
+currentSong config = do
         resp <- mpd MPD.currentSong config
-        let m = either (error . show) (getTag MPD.MUSICBRAINZ_TRACKID) resp
-        abortOnNothing m "The song has no mbid"
-        let artistname = either (error . show) (getTag MPD.Artist) resp
-        abortOnNothing artistname "The song has no artist"
-        printFirstElem m
-        printFirstElem artistname
-    where printFirstElem = print . MPD.toUtf8 . head . fromJust
+        either (error . show) (printAllTags tags) resp
 
-getTag :: MPD.Metadata -> Maybe MPD.Song-> Maybe [MPD.Value]
-getTag t = maybe Nothing (MPD.sgGetTag t)
+printAllTags :: [MPD.Metadata] -> Maybe MPD.Song -> IO ()
+printAllTags _ Nothing = print "No song is playing"
+printAllTags tags (Just song) = mapM_ (printTag . getTag song) tags
 
-main :: IO [()]
+printTag :: Maybe [MPD.Value] -> IO ()
+printTag Nothing = print "meep"
+printTag (Just value) = printFirstElem value
+    where printFirstElem = print . MPD.toUtf8 . head
+
+getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
+getTag song tag = MPD.sgGetTag tag song
+
+main :: IO ()
 main = do
         args <- getArgs
         let parsedArgs = parseArgs args
         let handledArgs = handleArgs parsedArgs
-        sequence handledArgs
+        handledArgs
     where parseArgs = getOpt Permute options
