@@ -78,13 +78,15 @@ currentSong config = mpd MPD.currentSong config >>= either (error . show) printA
 
 nextSong :: Config -> IO ()
 nextSong config = do
-        mpd MPD.next config >>= either (error . show) showSong
-    where showSong _ = currentSong config
+        mpd MPD.next config >>= eitherError (currentSong config)
 
 prevSong :: Config -> IO ()
 prevSong config = do
-        mpd MPD.previous config >>= either (error . show) showSong
-    where showSong _ = currentSong config
+        mpd MPD.previous config >>= eitherError (currentSong config)
+
+eitherError :: Show a => IO () -> Either a t -> IO ()
+eitherError _ (Left e) = (print . show) e
+eitherError f (Right _) = f
 
 printAllTags :: Maybe MPD.Song -> IO ()
 printAllTags Nothing = print "No song is playing"
