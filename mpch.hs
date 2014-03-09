@@ -38,10 +38,12 @@ data Command = Command {
     f :: Config -> IO ()
 }
 
+defaultCommand :: Command
 defaultCommand = Command (\_ -> print "unknown command")
 
 commands :: M.Map String Command
-commands = M.fromList[("currentsong", Command currentSong),
+commands = M.fromList[
+            ("currentsong", Command currentSong),
             ("next", Command nextSong),
             ("prev", Command prevSong)]
 
