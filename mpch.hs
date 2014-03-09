@@ -3,9 +3,7 @@
 import qualified Data.Map as M
 import qualified Network.MPD as MPD
 
-import Control.Monad (when)
-import Data.Maybe (isJust, fromJust)
-import System.Console.GetOpt (OptDescr(Option), ArgDescr(NoArg, OptArg, ReqArg), getOpt, ArgOrder(Permute), usageInfo)
+import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
 
 
