@@ -69,9 +69,7 @@ tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
 currentSong :: Config -> IO ()
-currentSong config = do
-        resp <- mpd MPD.currentSong config
-        either (error . show) printAllTags resp
+currentSong config = mpd MPD.currentSong config >>= either (error . show) printAllTags
 
 printAllTags :: Maybe MPD.Song -> IO ()
 printAllTags Nothing = print "No song is playing"
