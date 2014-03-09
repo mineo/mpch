@@ -67,8 +67,8 @@ applyArg :: Config -> String -> IO ()
 applyArg config noption = doIfMatch config commands noption
 
 doIfMatch :: Config -> M.Map String Command -> String -> IO ()
-doIfMatch config commands commandname = f commandFun config
-    where commandFun = M.findWithDefault defaultCommand commandname commands
+doIfMatch config commands commandname = commandFun config
+    where commandFun = f $ M.findWithDefault defaultCommand commandname commands
 
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
