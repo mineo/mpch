@@ -10,24 +10,28 @@ import System.Environment (getArgs)
 
 data Config = Config {
     host :: Maybe String,
-    port :: Maybe String
+    port :: Maybe String,
+    password :: Maybe MPD.Password
 }
     deriving Show
 
 defaultConfig :: Config
 defaultConfig = Config {
     host = Nothing,
-    port = Nothing
+    port = Nothing,
+    password = Nothing
 }
 
 options :: [OptDescr (Config -> Config)]
 options =
  [
     Option [] ["host"] (OptArg doHost "HOST") "mpd host",
-    Option [] ["port"] (OptArg doPort "PORT") "mpd port"
+    Option [] ["port"] (OptArg doPort "PORT") "mpd port",
+    Option [] ["password"] (OptArg doPassword "PASSWORD") "mpd password"
  ]
     where doHost arg opt = opt { host = arg }
           doPort arg opt = opt { port = arg }
+          doPassword arg opt = opt { password = arg }
 
 data Command = Command {
     name :: String,
@@ -38,9 +42,11 @@ commands :: [Command]
 commands = [Command "currentsong" currentSong]
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
-mpd action config = MPD.withMPD_ h p action
+mpd action config = MPD.withMPD_ h p $ doPw pw >> action
     where h = host config
           p = port config
+          pw = password config
+          doPw = maybe (return ()) MPD.password
 
 
 handleArgs :: ([Config -> Config], [String], [String]) -> IO ()
