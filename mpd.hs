@@ -39,7 +39,7 @@ data Command = Command {
 }
 
 commands :: [Command]
-commands = [Command "currentsong" currentSong]
+commands = [Command "currentsong" currentSong, Command "next" nextSong]
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
 mpd action config = MPD.withMPD_ h p $ doPw pw >> action
@@ -76,6 +76,11 @@ tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
 currentSong :: Config -> IO ()
 currentSong config = mpd MPD.currentSong config >>= either (error . show) printAllTags
+
+nextSong :: Config -> IO ()
+nextSong config = do
+        mpd MPD.next config >>= either (error . show) showSong
+    where showSong _ = currentSong config
 
 printAllTags :: Maybe MPD.Song -> IO ()
 printAllTags Nothing = print "No song is playing"
