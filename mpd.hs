@@ -59,7 +59,7 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                     error $ concat errs ++ usageInfo "" options
                 where dispatchArgs _ [] = print "no command specified"
-                      dispatchArgs config noptions = mapM_ (applyArg config) noptions
+                      dispatchArgs config (subcommand:args) = applyArg config subcommand
 
 applyArg :: Config -> String -> IO ()
 applyArg config noption = doIfMatch config commands noption
