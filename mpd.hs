@@ -39,7 +39,9 @@ data Command = Command {
 }
 
 commands :: [Command]
-commands = [Command "currentsong" currentSong, Command "next" nextSong]
+commands = [Command "currentsong" currentSong,
+            Command "next" nextSong,
+            Command "prev" prevSong]
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
 mpd action config = MPD.withMPD_ h p $ doPw pw >> action
@@ -80,6 +82,11 @@ currentSong config = mpd MPD.currentSong config >>= either (error . show) printA
 nextSong :: Config -> IO ()
 nextSong config = do
         mpd MPD.next config >>= either (error . show) showSong
+    where showSong _ = currentSong config
+
+prevSong :: Config -> IO ()
+prevSong config = do
+        mpd MPD.previous config >>= either (error . show) showSong
     where showSong _ = currentSong config
 
 printAllTags :: Maybe MPD.Song -> IO ()
