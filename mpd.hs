@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import qualified Data.Map as M
 import qualified Network.MPD as MPD
 
 import Control.Monad (when)
@@ -34,14 +35,15 @@ options =
           doPassword arg opt = opt { password = arg }
 
 data Command = Command {
-    name :: String,
     f :: Config -> IO ()
 }
 
-commands :: [Command]
-commands = [Command "currentsong" currentSong,
-            Command "next" nextSong,
-            Command "prev" prevSong]
+defaultCommand = Command (\_ -> print "unknown command")
+
+commands :: M.Map String Command
+commands = M.fromList[("currentsong", Command currentSong),
+            ("next", Command nextSong),
+            ("prev", Command prevSong)]
 
 mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
 mpd action config = MPD.withMPD_ h p $ doPw pw >> action
@@ -57,18 +59,16 @@ handleArgs opts = case opts of
                     let config = configure defaultConfig args
                     dispatchArgs config noptions
                  (_, _, errs) ->
-                    error $ concat errs ++ usageInfo "" options
+                    error $ concat errs ++ usageInfo "mpd [OPTION] command" options
                 where dispatchArgs _ [] = print "no command specified"
                       dispatchArgs config (subcommand:args) = applyArg config subcommand
 
 applyArg :: Config -> String -> IO ()
 applyArg config noption = doIfMatch config commands noption
 
-doIfMatch :: Config -> [Command] -> String -> IO ()
-doIfMatch _ [] _ = print "no command specified"
-doIfMatch config (x:xs) commandname
-        | commandname == name x = (f x) config
-        | otherwise = doIfMatch config xs commandname
+doIfMatch :: Config -> M.Map String Command -> String -> IO ()
+doIfMatch config commands commandname = f commandFun config
+    where commandFun = M.findWithDefault defaultCommand commandname commands
 
 configure :: Config -> [Config -> Config] -> Config
 configure = foldl (\cfg x -> x cfg)
