@@ -61,13 +61,10 @@ handleArgs opts = case opts of
                  (_, _, errs) ->
                     error $ concat errs ++ usageInfo "mpd [OPTION] command" options
                 where dispatchArgs _ [] = print "no command specified"
-                      dispatchArgs config (subcommand:args) = applyArg config subcommand
+                      dispatchArgs config (subcommand:args) = execCommand config subcommand
 
-applyArg :: Config -> String -> IO ()
-applyArg config noption = doIfMatch config commands noption
-
-doIfMatch :: Config -> M.Map String Command -> String -> IO ()
-doIfMatch config commands commandname = commandFun config
+execCommand :: Config -> String -> IO ()
+execCommand config commandname = commandFun config
     where commandFun = f $ M.findWithDefault defaultCommand commandname commands
 
 configure :: Config -> [Config -> Config] -> Config
