@@ -55,7 +55,7 @@ mpd action config = MPD.withMPD_ h p $ doPw pw >> action
 
 handleArgs :: ([Config -> Config], [String], [String]) -> IO ()
 handleArgs opts = case opts of
-                      (_, [], _) -> do
+                      (_, [], _) ->
                           putStrLn $ "no command specified\n" ++ usage
                       (args, (subcommand:commandargs), []) -> do
                           let config = configure defaultConfig args
@@ -79,12 +79,10 @@ currentSong :: Config -> IO ()
 currentSong config = mpd MPD.currentSong config >>= either (error . show) printAllTags
 
 nextSong :: Config -> IO ()
-nextSong config = do
-        mpd MPD.next config >>= eitherError (currentSong config)
+nextSong config = mpd MPD.next config >>= eitherError (currentSong config)
 
 prevSong :: Config -> IO ()
-prevSong config = do
-        mpd MPD.previous config >>= eitherError (currentSong config)
+prevSong config = mpd MPD.previous config >>= eitherError (currentSong config)
 
 eitherError :: Show a => IO () -> Either a t -> IO ()
 eitherError _ (Left e) = (print . show) e
