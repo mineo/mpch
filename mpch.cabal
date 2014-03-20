@@ -19,5 +19,5 @@ executable mpch
     main-is:             mpch.hs
   -- other-modules:
   build-depends:       base ==4.6.*,
-                       libmpd >= 0.8 && < 0.9,
+                       libmpd >= 0.9,
                        containers >= 0.5 && < 0.6
