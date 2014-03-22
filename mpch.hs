@@ -99,6 +99,8 @@ setVolume config (v:_) = case head v of
                                      where change = read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
 
+-- If the second argument is a Left, it will be printed, otherwise, the
+-- first argument will be called.
 eitherError :: Show a => IO () -> Either a t -> IO ()
 eitherError _ (Left e) = print e
 eitherError f (Right _) = f
