@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 import qualified Data.ByteString.Char8 as C
 import qualified Data.Map as M
 import qualified Network.MPD as MPD
