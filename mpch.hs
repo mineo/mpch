@@ -35,11 +35,11 @@ options =
           doPassword arg opt = opt { password = arg }
 
 data Command = Command {
-    f :: Config -> IO ()
+    f :: Config -> [String] -> IO ()
 }
 
 defaultCommand :: Command
-defaultCommand = Command (\_ -> print "unknown command")
+defaultCommand = Command (\_ _ -> print "unknown command")
 
 commands :: M.Map String Command
 commands = M.fromList[
@@ -61,14 +61,14 @@ handleArgs opts = case opts of
                           putStrLn $ "no command specified\n" ++ usage
                       (args, (subcommand:commandargs), []) -> do
                           let config = configure defaultConfig args
-                          execCommand config subcommand
+                          execCommand config subcommand commandargs
                       (_, _, errs) ->
                            error $ concat errs ++ usage
     where usage = usageInfo "mpch [OPTION] command" options ++ "where command is one of: " ++ commandnames
           commandnames = unwords $ M.keys commands
 
-execCommand :: Config -> String -> IO ()
-execCommand config commandname = commandFun config
+execCommand :: Config -> String -> [String] -> IO ()
+execCommand config commandname args = commandFun config args
     where commandFun = f $ M.findWithDefault defaultCommand commandname commands
 
 configure :: Config -> [Config -> Config] -> Config
@@ -77,14 +77,14 @@ configure = foldl (\cfg x -> x cfg)
 tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
-currentSong :: Config -> IO ()
-currentSong config = mpd MPD.currentSong config >>= either (error . show) printAllTags
+currentSong :: Config -> [String] -> IO ()
+currentSong config _ = mpd MPD.currentSong config >>= either (error . show) printAllTags
 
-nextSong :: Config -> IO ()
-nextSong config = mpd MPD.next config >>= eitherError (currentSong config)
+nextSong :: Config -> [String] -> IO ()
+nextSong config _ = mpd MPD.next config >>= eitherError (currentSong config [])
 
-prevSong :: Config -> IO ()
-prevSong config = mpd MPD.previous config >>= eitherError (currentSong config)
+prevSong :: Config -> [String] -> IO ()
+prevSong config _ = mpd MPD.previous config >>= eitherError (currentSong config [])
 
 eitherError :: Show a => IO () -> Either a t -> IO ()
 eitherError _ (Left e) = (print . show) e
