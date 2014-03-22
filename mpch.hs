@@ -45,7 +45,8 @@ commands :: M.Map String Command
 commands = M.fromList[
             ("currentsong", Command currentSong),
             ("next", Command nextSong),
-            ("prev", Command prevSong)]
+            ("prev", Command prevSong),
+            ("volume", Command setVolume)]
 
 mpd :: Config -> MPD.MPD a -> IO (MPD.Response a)
 mpd config action = MPD.withMPD_ h p $ doPw pw >> action
@@ -85,6 +86,18 @@ nextSong config _ = mpd config MPD.next >>= eitherError (currentSong config [])
 
 prevSong :: Config -> [String] -> IO ()
 prevSong config _ = mpd config MPD.previous >>= eitherError (currentSong config [])
+
+setVolume :: Config -> [String] -> IO ()
+setVolume config (v:_) = case head v of
+                             '+' -> changeVolume v
+                             '-' -> changeVolume v
+                             _ -> setAbsoluteVolume $ read v
+                             where
+                                 changeVolume amount = do
+                                     resp <- mpd config MPD.status
+                                     either (print . show) (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
+                                     where change = read amount
+                                 setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
 
 eitherError :: Show a => IO () -> Either a t -> IO ()
 eitherError _ (Left e) = (print . show) e
