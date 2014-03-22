@@ -47,8 +47,8 @@ commands = M.fromList[
             ("next", Command nextSong),
             ("prev", Command prevSong)]
 
-mpd :: MPD.MPD a -> Config -> IO (MPD.Response a)
-mpd action config = MPD.withMPD_ h p $ doPw pw >> action
+mpd :: Config -> MPD.MPD a -> IO (MPD.Response a)
+mpd config action = MPD.withMPD_ h p $ doPw pw >> action
     where h = host config
           p = port config
           pw = password config
@@ -78,13 +78,13 @@ tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
 currentSong :: Config -> [String] -> IO ()
-currentSong config _ = mpd MPD.currentSong config >>= either (error . show) printAllTags
+currentSong config _ = mpd config MPD.currentSong >>= either (error . show) printAllTags
 
 nextSong :: Config -> [String] -> IO ()
-nextSong config _ = mpd MPD.next config >>= eitherError (currentSong config [])
+nextSong config _ = mpd config MPD.next >>= eitherError (currentSong config [])
 
 prevSong :: Config -> [String] -> IO ()
-prevSong config _ = mpd MPD.previous config >>= eitherError (currentSong config [])
+prevSong config _ = mpd config MPD.previous >>= eitherError (currentSong config [])
 
 eitherError :: Show a => IO () -> Either a t -> IO ()
 eitherError _ (Left e) = (print . show) e
