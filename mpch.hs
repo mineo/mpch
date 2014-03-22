@@ -1,8 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import qualified Data.ByteString.Char8 as C
 import qualified Data.Map as M
 import qualified Network.MPD as MPD
 
+import Data.ByteString.UTF8 (fromString)
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
 
@@ -90,12 +92,20 @@ eitherError f (Right _) = f
 
 printAllTags :: Maybe MPD.Song -> IO ()
 printAllTags Nothing = print "No song is playing"
-printAllTags (Just song) = mapM_ (printTag . getTag song) tags
+printAllTags (Just song) = mapM_ getAndPrint tags
+    where
+        getAndPrint tag = do
+            let tagName = show tag
+                value = getTag song tag
+            printTag tagName value
 
-printTag :: Maybe [MPD.Value] -> IO ()
-printTag Nothing = print "meep"
-printTag (Just value) = printFirstElem value
-    where printFirstElem = print . MPD.toUtf8 . head
+printTag :: String -> Maybe [MPD.Value] -> IO ()
+printTag _ Nothing = print "meep"
+printTag tagName (Just value) = do
+        C.putStr $ fromString tagName
+        C.putStr $ fromString ": "
+        C.putStrLn $ fromString $ firstElem
+    where firstElem = MPD.toString $ head value
 
 getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
 getTag song tag = MPD.sgGetTag tag song

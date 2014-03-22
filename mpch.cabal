@@ -20,4 +20,6 @@ executable mpch
   -- other-modules:
   build-depends:       base ==4.6.*,
                        libmpd >= 0.9,
-                       containers >= 0.5 && < 0.6
+                       containers >= 0.5 && < 0.6,
+                       bytestring,
+                       utf8-string
