@@ -95,12 +95,12 @@ setVolume config (v:_) = case head v of
                              where
                                  changeVolume amount = do
                                      resp <- mpd config MPD.status
-                                     either (print . show) (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
+                                     either print (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
                                      where change = read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
 
 eitherError :: Show a => IO () -> Either a t -> IO ()
-eitherError _ (Left e) = (print . show) e
+eitherError _ (Left e) = print e
 eitherError f (Right _) = f
 
 printAllTags :: Maybe MPD.Song -> IO ()
