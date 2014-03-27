@@ -37,6 +37,12 @@ setVolume config (v:_) = case head v of
 status :: CommandFunc
 status config _ = mpd config MPD.status >>= either print (putStrLn . PP.ppShow) >> currentSong config []
 
+toggle :: CommandFunc
+toggle config _ = mpd config MPD.status >>= either print (doToggle . MPD.stState)
+    where doToggle MPD.Playing = mpd config (MPD.pause True) >> st
+          doToggle _ = mpd config (MPD.play Nothing) >> st
+          st = status config []
+
 -- If the second argument is a Left, it will be printed, otherwise, the
 -- first argument will be called.
 eitherError :: Show a => IO () -> Either a t -> IO ()
