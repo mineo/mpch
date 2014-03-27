@@ -1,25 +1,10 @@
-import qualified Data.ByteString.Char8 as C
 import qualified Data.Map as M
-import qualified Network.MPD as MPD
 
-import Data.ByteString.UTF8 (fromString)
 import System.Console.GetOpt (OptDescr(Option), ArgDescr(OptArg), getOpt, ArgOrder(Permute), usageInfo)
 import System.Environment (getArgs)
 
-
-data Config = Config {
-    host :: Maybe String,
-    port :: Maybe String,
-    password :: Maybe MPD.Password
-}
-    deriving Show
-
-defaultConfig :: Config
-defaultConfig = Config {
-    host = Nothing,
-    port = Nothing,
-    password = Nothing
-}
+import MPCH.Commands
+import MPCH.Config
 
 options :: [OptDescr (Config -> Config)]
 options =
@@ -32,12 +17,6 @@ options =
           doPort arg opt = opt { port = arg }
           doPassword arg opt = opt { password = arg }
 
-data Command = Command {
-    f :: Config -> [String] -> IO ()
-}
-
-defaultCommand :: Command
-defaultCommand = Command (\_ _ -> print "unknown command")
 
 commands :: M.Map String Command
 commands = M.fromList[
@@ -46,12 +25,6 @@ commands = M.fromList[
             ("prev", Command prevSong),
             ("volume", Command setVolume)]
 
-mpd :: Config -> MPD.MPD a -> IO (MPD.Response a)
-mpd config action = MPD.withMPD_ h p $ doPw pw >> action
-    where h = host config
-          p = port config
-          pw = password config
-          doPw = maybe (return ()) MPD.password
 
 
 handleArgs :: ([Config -> Config], [String], [String]) -> IO ()
@@ -70,58 +43,7 @@ execCommand :: Config -> String -> [String] -> IO ()
 execCommand config commandname args = commandFun config args
     where commandFun = f $ M.findWithDefault defaultCommand commandname commands
 
-configure :: Config -> [Config -> Config] -> Config
-configure = foldl (\cfg x -> x cfg)
 
-tags :: [MPD.Metadata]
-tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
-
-currentSong :: Config -> [String] -> IO ()
-currentSong config _ = mpd config MPD.currentSong >>= either (error . show) printAllTags
-
-nextSong :: Config -> [String] -> IO ()
-nextSong config _ = mpd config MPD.next >>= eitherError (currentSong config [])
-
-prevSong :: Config -> [String] -> IO ()
-prevSong config _ = mpd config MPD.previous >>= eitherError (currentSong config [])
-
-setVolume :: Config -> [String] -> IO ()
-setVolume config (v:_) = case head v of
-                             '+' -> changeVolume v
-                             '-' -> changeVolume v
-                             _ -> setAbsoluteVolume $ read v
-                             where
-                                 changeVolume amount = do
-                                     resp <- mpd config MPD.status
-                                     either print (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
-                                     where change = read amount
-                                 setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
-
--- If the second argument is a Left, it will be printed, otherwise, the
--- first argument will be called.
-eitherError :: Show a => IO () -> Either a t -> IO ()
-eitherError _ (Left e) = print e
-eitherError f (Right _) = f
-
-printAllTags :: Maybe MPD.Song -> IO ()
-printAllTags Nothing = print "No song is playing"
-printAllTags (Just song) = mapM_ getAndPrint tags
-    where
-        getAndPrint tag = do
-            let tagName = show tag
-                value = getTag song tag
-            printTag tagName value
-
-printTag :: String -> Maybe [MPD.Value] -> IO ()
-printTag _ Nothing = print "meep"
-printTag tagName (Just value) = do
-        C.putStr $ fromString tagName
-        C.putStr $ fromString ": "
-        C.putStrLn $ fromString $ firstElem
-    where firstElem = MPD.toString $ head value
-
-getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
-getTag song tag = MPD.sgGetTag tag song
 
 main :: IO ()
 main = do
