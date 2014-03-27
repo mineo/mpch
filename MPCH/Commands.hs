@@ -8,23 +8,21 @@ import Data.ByteString.UTF8 (fromString)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
 
-data Command = Command {
-    f :: Config -> [String] -> IO ()
-}
+type CommandFunc = Config -> [String] -> IO ()
 
-defaultCommand :: Command
-defaultCommand = Command (\_ _ -> print "unknown command")
+defaultCommand :: CommandFunc
+defaultCommand _ _ =  print "unknown command"
 
-currentSong :: Config -> [String] -> IO ()
+currentSong :: CommandFunc
 currentSong config _ = mpd config MPD.currentSong >>= either (error . show) printAllTags
 
-nextSong :: Config -> [String] -> IO ()
+nextSong :: CommandFunc
 nextSong config _ = mpd config MPD.next >>= eitherError (currentSong config [])
 
-prevSong :: Config -> [String] -> IO ()
+prevSong :: CommandFunc
 prevSong config _ = mpd config MPD.previous >>= eitherError (currentSong config [])
 
-setVolume :: Config -> [String] -> IO ()
+setVolume :: CommandFunc
 setVolume config (v:_) = case head v of
                              '+' -> changeVolume v
                              '-' -> changeVolume v
@@ -36,7 +34,7 @@ setVolume config (v:_) = case head v of
                                      where change = read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
 
-status :: Config -> [String] -> IO ()
+status :: CommandFunc
 status config _ = mpd config MPD.status >>= either print (putStrLn . PP.ppShow) >> currentSong config []
 
 -- If the second argument is a Left, it will be printed, otherwise, the

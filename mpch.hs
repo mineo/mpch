@@ -18,13 +18,13 @@ options =
           doPassword arg opt = opt { password = arg }
 
 
-commands :: M.Map String Command
+commands :: M.Map String CommandFunc
 commands = M.fromList[
-            ("currentsong", Command currentSong),
-            ("next", Command nextSong),
-            ("prev", Command prevSong),
-            ("status", Command status),
-            ("volume", Command setVolume)]
+            ("currentsong", currentSong),
+            ("next", nextSong),
+            ("prev", prevSong),
+            ("status", status),
+            ("volume", setVolume)]
 
 
 
@@ -42,7 +42,7 @@ handleArgs opts = case opts of
 
 execCommand :: Config -> String -> [String] -> IO ()
 execCommand config commandname args = commandFun config args
-    where commandFun = f $ M.findWithDefault defaultCommand commandname commands
+    where commandFun = M.findWithDefault defaultCommand commandname commands
 
 
 
