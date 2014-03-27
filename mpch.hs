@@ -41,7 +41,7 @@ handleArgs opts = case opts of
           commandnames = unwords $ M.keys commands
 
 execCommand :: Config -> String -> [String] -> IO ()
-execCommand config commandname args = commandFun config args
+execCommand config commandname = commandFun config
     where commandFun = M.findWithDefault defaultCommand commandname commands
 
 
