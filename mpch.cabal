@@ -22,4 +22,5 @@ executable mpch
                        libmpd >= 0.9,
                        containers >= 0.5 && < 0.6,
                        bytestring,
-                       utf8-string
+                       utf8-string,
+                       pretty-show >= 1.6.7 && < 2.0

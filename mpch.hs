@@ -23,6 +23,7 @@ commands = M.fromList[
             ("currentsong", Command currentSong),
             ("next", Command nextSong),
             ("prev", Command prevSong),
+            ("status", Command status),
             ("volume", Command setVolume)]
 
 

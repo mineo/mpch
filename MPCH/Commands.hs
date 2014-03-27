@@ -2,6 +2,7 @@ module MPCH.Commands where
 
 import qualified Data.ByteString.Char8 as C
 import qualified Network.MPD as MPD
+import qualified Text.Show.Pretty as PP
 
 import Data.ByteString.UTF8 (fromString)
 import           MPCH.Config (Config)
@@ -34,6 +35,9 @@ setVolume config (v:_) = case head v of
                                      either print (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
                                      where change = read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
+
+status :: Config -> [String] -> IO ()
+status config _ = mpd config MPD.status >>= either print (putStrLn . PP.ppShow) >> currentSong config []
 
 -- If the second argument is a Left, it will be printed, otherwise, the
 -- first argument will be called.
