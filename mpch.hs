@@ -36,7 +36,7 @@ handleArgs opts = case opts of
                       (args, (subcommand:commandargs), []) -> do
                           let config = configure defaultConfig args
                           resp <- execCommand config subcommand commandargs
-                          print resp
+                          putStrLn resp
                       (_, _, errs) ->
                            error $ concat errs ++ usage
     where usage = usageInfo "mpch [OPTION] command" options ++ "where command is one of: " ++ commandnames
