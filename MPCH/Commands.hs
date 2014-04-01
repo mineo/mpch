@@ -16,11 +16,14 @@ defaultCommand _ _ =  return "unknown command"
 currentSong :: CommandFunc
 currentSong config _ = mpd config MPD.currentSong >>= return . (either show allTags)
 
-nextSong :: CommandFunc
-nextSong config _ = mpd config MPD.next >>= either (return . show) (\_ -> currentSong config [])
+-- | Calls 'mpd' with the first argument, throwing away its return value and
+--   then calls 'currentSong'
+currentSongWrapper :: MPD.MPD a -> Config -> t -> IO String
+currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either (return . show) (\_ -> currentSong config [])
 
-prevSong :: CommandFunc
-prevSong config _ = mpd config MPD.previous >>= either (return . show) (\_ -> currentSong config [])
+nextSong = currentSongWrapper MPD.next
+
+prevSong = currentSongWrapper MPD.previous
 
 setVolume :: CommandFunc
 setVolume config [] = status config []
