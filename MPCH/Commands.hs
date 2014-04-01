@@ -7,7 +7,7 @@ import           Data.List (intercalate)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
 
-type CommandFunc = Config -> [String] -> IO (String)
+type CommandFunc = Config -> [String] -> IO String
 
 defaultCommand :: CommandFunc
 defaultCommand _ _ =  return "unknown command"
