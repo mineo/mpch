@@ -8,19 +8,19 @@ import Data.ByteString.UTF8 (fromString)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
 
-type CommandFunc = Config -> [String] -> IO ()
+type CommandFunc = Config -> [String] -> IO (String)
 
 defaultCommand :: CommandFunc
-defaultCommand _ _ =  print "unknown command"
+defaultCommand _ _ =  return "unknown command"
 
 currentSong :: CommandFunc
-currentSong config _ = mpd config MPD.currentSong >>= either (error . show) printAllTags
+currentSong config _ = mpd config MPD.currentSong >>= return . (either show allTags)
 
 nextSong :: CommandFunc
-nextSong config _ = mpd config MPD.next >>= eitherError (currentSong config [])
+nextSong config _ = mpd config MPD.next >>= either (return . show) (\_ -> currentSong config [])
 
 prevSong :: CommandFunc
-prevSong config _ = mpd config MPD.previous >>= eitherError (currentSong config [])
+prevSong config _ = mpd config MPD.previous >>= either (return . show) (\_ -> currentSong config [])
 
 setVolume :: CommandFunc
 setVolume config (v:_) = case head v of
@@ -30,44 +30,38 @@ setVolume config (v:_) = case head v of
                              where
                                  changeVolume amount = do
                                      resp <- mpd config MPD.status
-                                     either print (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
+                                     either (return . show) (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
                                      where change = read amount
-                                 setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherError (currentSong config [])
+                                 setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherReturn (currentSong config [])
+                                 eitherReturn _ (Left e) = return $ show e
+                                 eitherReturn f (Right _) = f
 
 status :: CommandFunc
 status config _ = mpd config MPD.status >>= either print (putStrLn . PP.ppShow) >> currentSong config []
 
 toggle :: CommandFunc
-toggle config _ = mpd config MPD.status >>= either print (doToggle . MPD.stState)
+toggle config _ = mpd config MPD.status >>= either (return . show) (doToggle . MPD.stState)
     where doToggle MPD.Playing = mpd config (MPD.pause True) >> st
           doToggle _ = mpd config (MPD.play Nothing) >> st
           st = status config []
 
--- If the second argument is a Left, it will be printed, otherwise, the
--- first argument will be called.
-eitherError :: Show a => IO () -> Either a t -> IO ()
-eitherError _ (Left e) = print e
-eitherError f (Right _) = f
-
 tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
-printAllTags :: Maybe MPD.Song -> IO ()
-printAllTags Nothing = print "No song is playing"
-printAllTags (Just song) = mapM_ getAndPrint tags
+allTags :: Maybe MPD.Song -> String
+allTags Nothing = "No song is playing"
+allTags (Just song) = concat $ map getTag_ tags
     where
-        getAndPrint tag = do
-            let tagName = show tag
+        getTag_ tag = preparePrintableTag tagName value
+            where
+                tagName = show tag
                 value = getTag song tag
-            printTag tagName value
 
-printTag :: String -> Maybe [MPD.Value] -> IO ()
-printTag _ Nothing = print "meep"
-printTag tagName (Just value) = do
-        C.putStr $ fromString tagName
-        C.putStr $ fromString ": "
-        C.putStrLn $ fromString $ firstElem
+preparePrintableTag :: String -> Maybe [MPD.Value] -> String
+preparePrintableTag _ Nothing = "meep"
+preparePrintableTag tagName (Just value) =
+        tagName ++ ": " ++ firstElem
     where firstElem = MPD.toString $ head value
 
 getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
-getTag song tag = MPD.sgGetTag tag song
+getTag = flip MPD.sgGetTag

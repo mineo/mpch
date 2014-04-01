@@ -35,13 +35,14 @@ handleArgs opts = case opts of
                           putStrLn $ "no command specified\n" ++ usage
                       (args, (subcommand:commandargs), []) -> do
                           let config = configure defaultConfig args
-                          execCommand config subcommand commandargs
+                          resp <- execCommand config subcommand commandargs
+                          print resp
                       (_, _, errs) ->
                            error $ concat errs ++ usage
     where usage = usageInfo "mpch [OPTION] command" options ++ "where command is one of: " ++ commandnames
           commandnames = unwords $ M.keys commands
 
-execCommand :: Config -> String -> [String] -> IO ()
+execCommand :: Config -> String -> [String] -> IO (String)
 execCommand config commandname = commandFun config
     where commandFun = M.findWithDefault defaultCommand commandname commands
 
