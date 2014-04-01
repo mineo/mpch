@@ -20,8 +20,10 @@ currentSong config _ = mpd config MPD.currentSong >>= return . (either show allT
 currentSongWrapper :: MPD.MPD a -> Config -> t -> IO String
 currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either (return . show) (\_ -> currentSong config [])
 
+nextSong :: CommandFunc
 nextSong = currentSongWrapper MPD.next
 
+prevSong :: CommandFunc
 prevSong = currentSongWrapper MPD.previous
 
 setVolume :: CommandFunc
