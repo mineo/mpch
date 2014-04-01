@@ -23,6 +23,7 @@ prevSong :: CommandFunc
 prevSong config _ = mpd config MPD.previous >>= either (return . show) (\_ -> currentSong config [])
 
 setVolume :: CommandFunc
+setVolume config [] = status config []
 setVolume config (v:_) = case head v of
                              '+' -> changeVolume v
                              '-' -> changeVolume v
