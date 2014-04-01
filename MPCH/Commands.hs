@@ -3,6 +3,7 @@ module MPCH.Commands where
 import qualified Network.MPD as MPD
 import qualified Text.Show.Pretty as PP
 
+import           Control.Monad (liftM)
 import           Data.List (intercalate)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
@@ -13,7 +14,7 @@ defaultCommand :: CommandFunc
 defaultCommand _ _ =  return "unknown command"
 
 currentSong :: CommandFunc
-currentSong config _ = mpd config MPD.currentSong >>= return . (either show allTags)
+currentSong config _ = liftM (either show allTags) (mpd config MPD.currentSong)
 
 -- | Calls 'mpd' with the first argument, throwing away its return value and
 --   then calls 'currentSong'
