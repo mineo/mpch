@@ -3,7 +3,7 @@ module MPCH.Commands where
 import qualified Network.MPD as MPD
 import qualified Text.Show.Pretty as PP
 
-import           Data.List (intersperse)
+import           Data.List (intercalate)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
 
@@ -55,7 +55,7 @@ tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
 allTags :: Maybe MPD.Song -> String
 allTags Nothing = "No song is playing"
-allTags (Just song) = concat $ intersperse "\n" $ map getTag_ tags
+allTags (Just song) = intercalate "\n" $ map getTag_ tags
     where
         getTag_ tag = preparePrintableTag tagName value
             where
