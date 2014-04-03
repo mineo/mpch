@@ -42,7 +42,7 @@ handleArgs opts = case opts of
     where usage = usageInfo "mpch [OPTION] command" options ++ "where command is one of: " ++ commandnames
           commandnames = unwords $ M.keys commands
 
-execCommand :: Config -> String -> [String] -> IO (String)
+execCommand :: Config -> String -> [String] -> IO String
 execCommand config commandname = commandFun config
     where commandFun = M.findWithDefault defaultCommand commandname commands
 
@@ -52,6 +52,6 @@ main :: IO ()
 main = do
         args <- getArgs
         let parsedArgs = parseArgs args
-        let handledArgs = handleArgs parsedArgs
+            handledArgs = handleArgs parsedArgs
         handledArgs
     where parseArgs = getOpt Permute options
