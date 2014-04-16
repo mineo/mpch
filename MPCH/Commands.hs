@@ -43,7 +43,13 @@ setVolume config (v:_) = case head v of
                                  eitherReturn f (Right _) = f
 
 status :: CommandFunc
-status config _ = mpd config MPD.status >>= either print (putStrLn . PP.ppShow) >> currentSong config []
+status config _ = do
+    st <- mpd config MPD.status
+    either (return . show) handleStatus st
+        where handleStatus st = do
+              let showSt = PP.ppShow st
+              cs <- currentSong config []
+              return $ showSt ++ "\n" ++  cs
 
 toggle :: CommandFunc
 toggle config _ = mpd config MPD.status >>= either (return . show) (doToggle . MPD.stState)
