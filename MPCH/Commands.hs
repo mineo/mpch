@@ -63,6 +63,18 @@ stToggleWrapper bfun mpdfun config args = case arg of
           doToggle True = mpd config (mpdfun False) >> st
           doToggle False = mpd config (mpdfun True) >> st
 
+single :: CommandFunc
+single = stToggleWrapper MPD.stSingle MPD.single
+
+consume :: CommandFunc
+consume = stToggleWrapper MPD.stConsume MPD.consume
+
+random :: CommandFunc
+random = stToggleWrapper MPD.stRandom MPD.random
+
+mpdrepeat :: CommandFunc
+mpdrepeat = stToggleWrapper MPD.stRepeat MPD.repeat
+
 tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 

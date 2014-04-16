@@ -20,10 +20,14 @@ options =
 
 commands :: M.Map String CommandFunc
 commands = M.fromList[
+            ("consume", consume),
             ("currentsong", currentSong),
             ("next", nextSong),
             ("prev", prevSong),
+            ("random", random),
+            ("repeat", mpdrepeat),
             ("status", status),
+            ("single", single),
             ("toggle", toggle),
             ("volume", setVolume)]
 
