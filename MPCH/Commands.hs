@@ -51,6 +51,18 @@ toggle config _ = mpd config MPD.status >>= either (return . show) (doToggle . M
           doToggle _ = mpd config (MPD.play Nothing) >> st
           st = status config []
 
+stToggleWrapper :: (MPD.Status -> Bool) -> (Bool -> MPD.MPD a) -> Config -> [String]-> IO String
+stToggleWrapper bfun mpdfun config args = case arg of
+        Nothing -> execToggle
+        Just x -> mpd config (mpdfun x) >> st
+    where arg = case args of
+            (x:_) -> stringToBool x
+            _ -> Nothing
+          st = status config []
+          execToggle = mpd config MPD.status >>= either (return . show) (doToggle . bfun)
+          doToggle True = mpd config (mpdfun False) >> st
+          doToggle False = mpd config (mpdfun True) >> st
+
 tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
 
@@ -71,3 +83,10 @@ preparePrintableTag tagName (Just value) =
 
 getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
 getTag = flip MPD.sgGetTag
+
+-- | Maps mpcs command line booleans "on" and "off" to their 'Bool'
+--   counterparts or 'Nothing' if the argument is invalid.
+stringToBool :: String -> Maybe Bool
+stringToBool "on" = Just True
+stringToBool "off" = Just False
+stringToBool _ = Nothing
