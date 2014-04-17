@@ -29,6 +29,7 @@ commands = M.fromList[
             ("status", status),
             ("single", single),
             ("toggle", toggle),
+            ("version", version),
             ("volume", setVolume)]
 
 

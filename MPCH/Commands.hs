@@ -7,6 +7,7 @@ import           Control.Monad (liftM)
 import           Data.List (intercalate)
 import           MPCH.Config (Config)
 import           MPCH.MPD (mpd)
+import           Network.MPD.Core (getVersion)
 
 type CommandFunc = Config -> [String] -> IO String
 
@@ -89,6 +90,10 @@ toggleImpl config _ = mpd config MPD.status >>= either (return . Left) (doToggle
 
 toggle :: CommandFunc
 toggle = statusWrapper toggleImpl
+
+version :: CommandFunc
+version config _ = mpd config getVersion >>= either (return . show) (return . dottedVersion)
+    where dottedVersion (major, minor, patch) = intercalate "." $ map show [major, minor, patch]
 
 tags :: [MPD.Metadata]
 tags = [MPD.MUSICBRAINZ_TRACKID, MPD.Artist, MPD.Album, MPD.Title]
