@@ -20,7 +20,7 @@ currentSong config _ = liftM (either show allTags) (mpd config MPD.currentSong)
 -- | Calls 'mpd' with the first argument, throwing away its return value in
 --   case of success and then calls 'currentSong'
 currentSongWrapper :: MPD.MPD a -> Config -> t -> IO String
-currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either (return . show) doCurrentSong
+currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either retShow doCurrentSong
     where doCurrentSong _ = currentSong config []
 
 nextSong :: CommandFunc
@@ -41,7 +41,7 @@ setVolume config (v:_) = case head v of
                                      either (return . show) (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
                                      where change = read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherReturn (currentSong config [])
-                                 eitherReturn _ (Left e) = return $ show e
+                                 eitherReturn _ (Left e) = retShow e
                                  eitherReturn f (Right _) = f
 
 status :: CommandFunc
@@ -56,7 +56,7 @@ status config _ = do
 
 -- | Executes the first argument and, if that was successful, 'status'.
 statusWrapper :: (Config -> [String] -> IO (MPD.Response a)) -> CommandFunc
-statusWrapper f config args = f config args >>= either (return . show) (\_ -> status config [])
+statusWrapper f config args = f config args >>= either retShow (\_ -> status config [])
 
 stToggleWrapper :: (MPD.Status -> Bool) -> (Bool -> MPD.MPD a) -> Config -> [String] -> IO (MPD.Response a)
 stToggleWrapper bfun mpdfun config args = case arg of
@@ -92,7 +92,7 @@ toggle :: CommandFunc
 toggle = statusWrapper toggleImpl
 
 version :: CommandFunc
-version config _ = mpd config getVersion >>= either (return . show) (return . dottedVersion)
+version config _ = mpd config getVersion >>= either retShow (return . dottedVersion)
     where dottedVersion (major, minor, patch) = intercalate "." $ map show [major, minor, patch]
 
 tags :: [MPD.Metadata]
@@ -115,6 +115,9 @@ preparePrintableTag tagName (Just value) =
 
 getTag :: MPD.Song -> MPD.Metadata -> Maybe [MPD.Value]
 getTag = flip MPD.sgGetTag
+
+retShow :: (Monad m, Show a) => a -> m String
+retShow = return . show
 
 -- | Maps mpcs command line booleans "on" and "off" to their 'Bool'
 --   counterparts or 'Nothing' if the argument is invalid.
