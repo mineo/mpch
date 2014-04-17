@@ -16,10 +16,11 @@ defaultCommand _ _ =  return "unknown command"
 currentSong :: CommandFunc
 currentSong config _ = liftM (either show allTags) (mpd config MPD.currentSong)
 
--- | Calls 'mpd' with the first argument, throwing away its return value and
---   then calls 'currentSong'
+-- | Calls 'mpd' with the first argument, throwing away its return value in
+--   case of success and then calls 'currentSong'
 currentSongWrapper :: MPD.MPD a -> Config -> t -> IO String
-currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either (return . show) (\_ -> currentSong config [])
+currentSongWrapper mpdfun config _ = mpd config mpdfun >>= either (return . show) doCurrentSong
+    where doCurrentSong _ = currentSong config []
 
 nextSong :: CommandFunc
 nextSong = currentSongWrapper MPD.next
