@@ -58,7 +58,7 @@ toggle config _ = mpd config MPD.status >>= either (return . show) (doToggle . M
           doToggle _ = mpd config (MPD.play Nothing) >> st
           st = status config []
 
-stToggleWrapper :: (MPD.Status -> Bool) -> (Bool -> MPD.MPD a) -> Config -> [String]-> IO String
+stToggleWrapper :: (MPD.Status -> Bool) -> (Bool -> MPD.MPD a) -> CommandFunc
 stToggleWrapper bfun mpdfun config args = case arg of
         Nothing -> execToggle
         Just x -> mpd config (mpdfun x) >> st
