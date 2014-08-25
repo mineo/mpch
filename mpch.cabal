@@ -18,7 +18,7 @@ cabal-version:       >=1.8
 executable mpch
     main-is:             mpch.hs
   -- other-modules:
-  build-depends:       base ==4.6.*,
+  build-depends:       base >= 4.6.0 && < 4.8.0,
                        libmpd >= 0.9,
                        containers >= 0.5 && < 0.6,
                        bytestring,
