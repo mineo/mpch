@@ -34,12 +34,17 @@ setVolume config [] = status config []
 setVolume config (v:_) = case head v of
                              '+' -> changeVolume v
                              '-' -> changeVolume v
-                             _ -> setAbsoluteVolume $ read v
+                             _ -> setAbsoluteVolume $ MPD.Volume $ read v
                              where
                                  changeVolume amount = do
                                      resp <- mpd config MPD.status
-                                     either (return . show) (setAbsoluteVolume . (+ change) . MPD.stVolume) resp
-                                     where change = read amount
+                                     either (return . show) (\status -> maybe
+                                                                        (return "foo")
+                                                                        (setAbsoluteVolume . (+change))
+                                                                        (MPD.stVolume status)
+                                                                        )
+                                       resp
+                                     where change = MPD.Volume $ read amount
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherReturn (currentSong config [])
                                  eitherReturn _ (Left e) = retShow e
                                  eitherReturn f (Right _) = f
