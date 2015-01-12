@@ -34,7 +34,7 @@ setVolume config [] = status config []
 setVolume config (v:_) = case head v of
                              '+' -> changeVolume v
                              '-' -> changeVolume v
-                             _ -> setAbsoluteVolume $ MPD.Volume $ read v
+                             _ -> setAbsoluteVolume $ fromIntegral (read v :: Int)
                              where
                                  changeVolume amount = do
                                      resp <- mpd config MPD.status
@@ -44,7 +44,7 @@ setVolume config (v:_) = case head v of
                                                                         (MPD.stVolume status)
                                                                         )
                                        resp
-                                     where change = MPD.Volume $ read amount
+                                     where change = fromIntegral (read amount :: Int)
                                  setAbsoluteVolume value = mpd config (MPD.setVolume value) >>= eitherReturn (currentSong config [])
                                  eitherReturn _ (Left e) = retShow e
                                  eitherReturn f (Right _) = f
